@@ -1,0 +1,92 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+steps:
+# First, verify that the tag is signed by a trusted key.
+# All trusted keys are listed below. To edit the list, the person requires
+# access token to the drone.io server to sign this file.
+# I.e., without access token, one cannot add new trusted keys.
+- name: verify-tag
+  image: alpine/git
+  environment:
+    MAINTAINER_KEYS: >
+      43D826EBEABB460B144138713E0AE979094264F6
+  commands:
+  - apk add --no-cache gnupg
+  - gpg --quiet --list-keys >/dev/null # .gnupg must exist for the following script to work
+  - |
+    for k in $MAINTAINER_KEYS; do
+      if [ -e ".drone/$k.asc" ]; then
+        i=$(gpg --dry-run --with-colons --import-options show-only --import ".drone/$k.asc" | awk -F: '/^fpr:/ {print $10; exit}')
+        [ "$i" != "$k" ] && { echo "Mismatching key in .drone/$k.asc" >&2; exit 1; }
+        gpg --quiet --import ".drone/$k.asc"
+        echo -e "5\ny\n" | gpg --quiet --no-greeting --no-tty --command-fd 0 --expert --edit-key "$k" trust
+      elif [ "$k" ]; then
+        echo "Warning, missing key file .drone/$k.asc" >&2
+      fi
+    done
+  - gpg --quiet --list-keys
+  - git verify-tag $${DRONE_COMMIT_REF#refs/tags/}
+  when:
+    event: tag
+    branch: refs/tags/*
+
+- name: build
+  #image: debian:buster-slim
+  image: debian:buster-dev
+  volumes:
+  - name: cache
+    path: /build
+  environment:
+    SECRET_KEY:
+      from_secret: gpg_sign_key
+  commands:
+  # requirements
+  - apt-get -qqy update
+  - apt-get -qqy install debhelper devscripts
+  # gpg key
+  - echo "$SECRET_KEY" | gpg --quiet --import /dev/stdin
+  - keyid=$(echo "$SECRET_KEY" | gpg --dry-run --with-colons --import-options show-only --import /dev/stdin | awk '-F:' '/^fpr:/ {print $10; exit}')
+  - test "$keyid" && unset SECRET_KEY || exit 1
+  - gpg --armor --export-options export-minimal --export "$keyid" > /build/release-key.asc
+  # build deps
+  - cp -a ../src /build/package
+  - cd /build/package
+  - mk-build-deps -i -r
+  # build
+  - debuild --no-lintian -d "-k$keyid" --post-clean --source-option=--git-ref=$${DRONE_COMMIT_REF:-master}
+
+- name: ls
+  image: alpine/git
+  volumes:
+  - name: cache
+    path: /build
+  commands:
+  - ls -lR /build
+  - "export | grep -F DRONE_"
+  - sh -c 'cat /build/*.changes; :'
+
+- name: publish
+  image: plugins/github-release
+  volumes:
+  - name: cache
+    path: /build
+  settings:
+    api_key:
+      from_secret: github_api_token
+    files: /build/*.*
+  when:
+    event: tag
+    branch: refs/tags/*
+
+volumes:
+- name: cache
+  temp: {}
+
+---
+kind: signature
+hmac: 032665fd161213c9bfe6313180406b9019fa93aed664b762953dd439e48c4d33
+
+...

@@ -1,0 +1,9 @@
+/debian/*.debhelper.log
+/debian/*.substvars
+/debian/.debhelper/
+/debian/test-releases/
+/debian/debhelper-build-stamp
+/debian/files
+
+/.drone.secret*
+/.env

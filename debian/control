@@ -1,0 +1,15 @@
+Source: test-releases
+Section: misc
+Priority: important
+Maintainer: Jaakko Kantojärvi <jaakko@n-1.fi>
+Build-Depends: debhelper-compat (= 12)
+Rules-Requires-Root: no
+Standards-Version: 4.5.0
+Homepage: https://deb.n-1.fi/
+
+Package: test-releases
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: Test Debian Package Automated Builds
+  This is dummy package, to test automated build pipeline
