@@ -33,6 +33,12 @@ steps:
     event: tag
     branch: refs/tags/*
 
+- name: debug
+  image: alpine/git
+  commands:
+  - export
+  - git show-ref
+
 - name: build
   image: debian:buster-slim
   volumes:
@@ -86,6 +92,6 @@ volumes:
 
 ---
 kind: signature
-hmac: 9cfb8905850e92ecaeeeb1fe1c3a800eaff8242a7a4a3abb9bb35c2b7cb5f4a3
+hmac: e1de7637ec1a88fd9c5716bb493d7926966dc41a545f18f768af12866b95d374
 
 ...
