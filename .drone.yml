@@ -14,6 +14,9 @@ steps:
     MAINTAINER_KEYS: >
       43D826EBEABB460B144138713E0AE979094264F6
   commands:
+  # by default, drone doesn't pull tags
+  - git show-ref | grep -qs "$DRONE_COMMIT_REF" || git fetch --no-tags origin tag "+$${DRONE_COMMIT_REF#/refs/tags/}"
+  # verify tag signature
   - apk add --no-cache gnupg
   - gpg --quiet --list-keys >/dev/null # .gnupg must exist for the following script to work
   - |
@@ -31,7 +34,8 @@ steps:
   - git verify-tag $${DRONE_COMMIT_REF#refs/tags/}
   when:
     event: tag
-    branch: refs/tags/*
+    ref:
+    - refs/tags/*
 
 - name: debug
   image: alpine/git
@@ -61,7 +65,8 @@ steps:
   - cd /build/package
   - mk-build-deps -i -r
   # build
-  - debuild --no-lintian -d "-k$keyid" --post-clean --source-option=--git-ref=HEAD
+  - git show-ref | grep -qs "$DRONE_COMMIT_REF" || git update-ref "$DRONE_COMMIT_REF" HEAD
+  - debuild --no-lintian -d "-k$keyid" --post-clean --source-option=--git-ref=$DRONE_COMMIT_REF
 
 - name: ls
   image: alpine/git
@@ -84,7 +89,8 @@ steps:
     files: /build/*.*
   when:
     event: tag
-    branch: refs/tags/*
+    ref:
+    - refs/tags/*
 
 volumes:
 - name: cache
@@ -92,6 +98,6 @@ volumes:
 
 ---
 kind: signature
-hmac: d54bc312006b22ccd08e61fce3f09a4793cf2bdcf2a7630342e7a4838a217a9f
+hmac: 6cf2d63f0cb6206a308cfb24cc87d1163013a62fff69e5a6b3b19c71fe502eff
 
 ...
