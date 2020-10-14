@@ -34,8 +34,7 @@ steps:
     branch: refs/tags/*
 
 - name: build
-  #image: debian:buster-slim
-  image: debian:buster-dev
+  image: debian:buster-slim
   volumes:
   - name: cache
     path: /build
@@ -87,6 +86,6 @@ volumes:
 
 ---
 kind: signature
-hmac: 032665fd161213c9bfe6313180406b9019fa93aed664b762953dd439e48c4d33
+hmac: 9cfb8905850e92ecaeeeb1fe1c3a800eaff8242a7a4a3abb9bb35c2b7cb5f4a3
 
 ...
