@@ -61,7 +61,7 @@ steps:
   - cd /build/package
   - mk-build-deps -i -r
   # build
-  - debuild --no-lintian -d "-k$keyid" --post-clean --source-option=--git-ref=$${DRONE_COMMIT_REF:-master}
+  - debuild --no-lintian -d "-k$keyid" --post-clean --source-option=--git-ref=HEAD
 
 - name: ls
   image: alpine/git
@@ -92,6 +92,6 @@ volumes:
 
 ---
 kind: signature
-hmac: e1de7637ec1a88fd9c5716bb493d7926966dc41a545f18f768af12866b95d374
+hmac: d54bc312006b22ccd08e61fce3f09a4793cf2bdcf2a7630342e7a4838a217a9f
 
 ...
