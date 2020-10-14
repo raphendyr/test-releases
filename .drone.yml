@@ -15,7 +15,7 @@ steps:
       43D826EBEABB460B144138713E0AE979094264F6
   commands:
   # by default, drone doesn't pull tags
-  - git show-ref | grep -qs "$DRONE_COMMIT_REF" || git fetch --no-tags origin tag "+$${DRONE_COMMIT_REF#/refs/tags/}"
+  - git show-ref | grep -qs "$DRONE_COMMIT_REF" || git fetch --no-tags origin tag "$${DRONE_COMMIT_REF#refs/tags/}"
   # verify tag signature
   - apk add --no-cache gnupg
   - gpg --quiet --list-keys >/dev/null # .gnupg must exist for the following script to work
@@ -98,6 +98,6 @@ volumes:
 
 ---
 kind: signature
-hmac: 6cf2d63f0cb6206a308cfb24cc87d1163013a62fff69e5a6b3b19c71fe502eff
+hmac: f94ee7a31097c61c9ef6893c81ba84936942b309fedf3d98cfe54876c0517dc0
 
 ...
